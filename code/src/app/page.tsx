@@ -1,95 +1,142 @@
 "use client";
 import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
+
+// Define the shape of our secret
+type Secret = {
+  id: number;
+  service: string;
+  username: string;
+  password: string;
+};
 
 export default function Home() {
-  const [count, setCount] = useState(0);
-  const [status, setStatus] = useState("Idle");
+  const [secrets, setSecrets] = useState<Secret[]>([]);
+  const [form, setForm] = useState({ service: "", username: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [revealed, setRevealed] = useState<number | null>(null); // Stores ID of revealed password
 
+  // 1. LOAD: Fetch secrets on startup
   useEffect(() => {
-    const saved = localStorage.getItem("empire-count");
-    if (saved) setCount(parseInt(saved));
+    fetchSecrets();
   }, []);
 
-  const handleClick = () => {
-    const newCount = count + 1;
-    setCount(newCount);
-    localStorage.setItem("empire-count", newCount.toString());
-    setStatus("Syncing...");
-    
-    clearTimeout((window as any).saveTimer);
-    (window as any).saveTimer = setTimeout(() => {
-      saveToGit(newCount);
-    }, 2000);
+  const fetchSecrets = async () => {
+    const { data, error } = await supabase
+      .from("vault")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) console.error("Error fetching:", error);
+    else setSecrets(data || []);
   };
 
-  const saveToGit = async (lvl: number) => {
-    try {
-      setStatus("Pushing...");
-      // Simulate API call for visual effect if API isn't running
-      await new Promise(r => setTimeout(r, 1000)); 
-      // await fetch("/api/save", { method: "POST", body: JSON.stringify({ count: lvl }) });
-      setStatus("Secured ✅");
-    } catch (e) {
-      setStatus("Error ❌");
+  // 2. SAVE: Add a new secret
+  const handleSave = async () => {
+    if (!form.service || !form.password) return alert("Fill the details, Monkey!");
+    
+    setLoading(true);
+    const { error } = await supabase.from("vault").insert([form]);
+
+    if (error) {
+      alert("Save Failed!");
+    } else {
+      setForm({ service: "", username: "", password: "" }); // Clear form
+      fetchSecrets(); // Refresh list
     }
+    setLoading(false);
   };
 
   return (
-    // THE CONTAINER: Full screen, dark gradient background
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-purple-950 to-black text-white p-4">
+    <main className="flex min-h-screen flex-col items-center bg-zinc-950 text-white p-6 font-mono">
       
-      {/* THE CARD: Glass effect, rounded corners, border */}
-      <div className="relative group w-full max-w-md p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl transition-all hover:shadow-purple-500/20">
-        
-        {/* Glow Effect behind the card */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-        
-        <div className="relative">
-          {/* HEADER */}
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-              PROJECT COSMOS
-            </h1>
-            <span className="px-3 py-1 text-xs font-mono text-purple-300 bg-purple-500/10 rounded-full border border-purple-500/20">
-              V 0.1
-            </span>
+      {/* HEADER */}
+      <div className="w-full max-w-md mb-8 mt-10 text-center">
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">
+          🔐 RAHUL'S VAULT
+        </h1>
+        <p className="text-xs text-zinc-500 mt-2">SECURE STORAGE PROTOCOL V1</p>
+      </div>
+
+      {/* INPUT FORM (The Safe Door) */}
+      <div className="w-full max-w-md bg-zinc-900/50 border border-zinc-800 p-6 rounded-xl backdrop-blur-sm shadow-xl">
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider">Service Name</label>
+            <input
+              type="text"
+              placeholder="e.g. Netflix, Wifi"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded p-3 mt-1 focus:outline-none focus:border-emerald-500 transition-colors"
+              value={form.service}
+              onChange={(e) => setForm({ ...form, service: e.target.value })}
+            />
+          </div>
+          
+          <div>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider">Username / Email</label>
+            <input
+              type="text"
+              placeholder="e.g. rahul@empire.com"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded p-3 mt-1 focus:outline-none focus:border-emerald-500 transition-colors"
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+            />
           </div>
 
-          {/* STATS DISPLAY */}
-          <div className="text-center py-10">
-            <p className="text-gray-400 text-sm uppercase tracking-widest mb-2">Grind Level</p>
-            <div className="text-8xl font-black text-white tracking-tighter drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">
-              {count}
-            </div>
-            
-            {/* Status Pill */}
-            <div className={`mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${status.includes("Secured") ? "bg-green-500/10 text-green-400" : "bg-blue-500/10 text-blue-400"}`}>
-              <span className={`w-2 h-2 rounded-full ${status.includes("Secured") ? "bg-green-500" : "bg-blue-500 animate-pulse"}`}></span>
-              {status}
-            </div>
+          <div>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider">Password</label>
+            <input
+              type="text" // Kept as text so you can see what you type (for now)
+              placeholder="Secret Key..."
+              className="w-full bg-zinc-950 border border-zinc-800 rounded p-3 mt-1 focus:outline-none focus:border-emerald-500 transition-colors text-emerald-400"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
           </div>
 
-          {/* ACTION BUTTON */}
           <button
-            onClick={handleClick}
-            className="w-full relative overflow-hidden group/btn bg-white text-black font-bold py-4 rounded-xl text-lg transition-all active:scale-[0.98]"
+            onClick={handleSave}
+            disabled={loading}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-black font-bold py-3 rounded mt-4 transition-all active:scale-95 disabled:opacity-50"
           >
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
-            <span className="relative group-hover/btn:text-white transition-colors">
-              BUILD EMPIRE 🔥
-            </span>
+            {loading ? "ENCRYPTING..." : "LOCK IT IN 🔒"}
           </button>
-
-          {/* KAGURA QUOTE */}
-          {count > 0 && (
-            <div className="mt-6 text-center border-t border-white/5 pt-4">
-              <p className="text-xs text-slate-500 italic">
-                "{count > 30 ? "Finally awake, Monkey?" : "Don't stop now."}" - Kagura
-              </p>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* THE LIST (The Inventory) */}
+      <div className="w-full max-w-md mt-10 space-y-3">
+        <h2 className="text-sm text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-2">
+          Stored Secrets ({secrets.length})
+        </h2>
+
+        {secrets.map((secret) => (
+          <div key={secret.id} className="group relative bg-zinc-900 border border-zinc-800 p-4 rounded-lg flex justify-between items-center hover:border-zinc-700 transition-all">
+            
+            {/* Left Side: Info */}
+            <div>
+              <h3 className="font-bold text-white">{secret.service}</h3>
+              <p className="text-xs text-zinc-500">{secret.username}</p>
+            </div>
+
+            {/* Right Side: Password Reveal */}
+            <div 
+              onClick={() => setRevealed(revealed === secret.id ? null : secret.id)}
+              className="cursor-pointer bg-black/50 px-3 py-2 rounded border border-zinc-800 hover:border-emerald-500/50 transition-colors select-none"
+            >
+              <code className={`text-sm ${revealed === secret.id ? "text-emerald-400" : "text-zinc-600"}`}>
+                {revealed === secret.id ? secret.password : "••••••••"}
+              </code>
+            </div>
+
+          </div>
+        ))}
+        
+        {secrets.length === 0 && (
+          <p className="text-center text-zinc-600 italic text-sm py-10">Vault is empty.</p>
+        )}
+      </div>
+
     </main>
   );
 }
