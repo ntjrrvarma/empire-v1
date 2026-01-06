@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🔐 Empire V1 - Personal Password Vault
 
-## Getting Started
+## 📖 Overview
+Empire V1 is a secure, personal password management application designed to store and retrieve credentials efficiently. It serves as a foundational project to explore **CRUD operations**, **Database Management**, and **Frontend-Backend Integration**.
 
-First, run the development server:
+## 🚀 Tech Stack
+* **Frontend:** Next.js 15 (React)
+* **Backend:** Supabase (PostgreSQL)
+* **Styling:** Tailwind CSS
+* **Language:** TypeScript
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Key Features
+* **Add Credentials:** Simple form to input website, username, and password.
+* **View Vault:** Real-time fetching of stored passwords from the cloud database.
+* **Search/Filter:** Instantly find credentials (Client-side filtering).
+* **Delete/Update:** Manage lifecycle of credentials.
+* **Security (Dev):** Uses `.env.local` to protect API keys during development.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📸 Screenshots
+*(Add a screenshot of your main dashboard here - e.g., `![Dashboard](./screenshots/dashboard.png)`)*
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 💡 Lessons Learned
+* **Supabase Integration:** Learned how to connect a React frontend to a Postgres database using the Supabase JS Client.
+* **State Management:** Managed loading states and async data fetching in Next.js.
+* **Security Basics:** Understood the importance of Environment Variables vs. Hardcoding keys.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔮 Future Improvements
+* Implement Encryption (AES) for password storage.
+* Add User Authentication (merged into Project Heimdall).
